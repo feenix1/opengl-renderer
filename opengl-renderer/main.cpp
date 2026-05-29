@@ -12,6 +12,7 @@ void processInput(GLFWwindow* window) {
 	}
 }
 
+
 int main() {
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -34,10 +35,38 @@ int main() {
 	glViewport(0, 0, 800, 600);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
+	float verts[] = {
+		-0.5f, -0.5f, 0.0f,
+		 0.5f, -0.5f, 0.0f,
+		 0.0f,  0.5f, 0.0f
+	};
+	unsigned int VBO;
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
+
+	const char *vertexShaderSource = "#version 330 core\n"
+		"layout (location = 0) in vec3 aPos;\n"
+		"void main()\n"
+		"{\n"
+		"   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+		"}\0";
+	unsigned int vertexShader;
+	vertexShader = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+	glCompileShader(vertexShader);
+	int success;
+	char infoLog[512];
+	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+	if (!success) {
+		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+		std::cout << "vertex shader compilation failed: \n" << infoLog << std::endl;
+	}
+
 	while (!glfwWindowShouldClose(window)) {
 		processInput(window);
 
-		glClearColor(1, 1, 1, 1);
+		glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		glfwPollEvents();
