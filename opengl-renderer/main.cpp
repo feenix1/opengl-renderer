@@ -38,19 +38,34 @@ int main() {
 	// Create VAO (stores vert buffer setup/settings)
 	unsigned int VAO;
 	glGenVertexArrays(1, &VAO);
-
 	glBindVertexArray(VAO);
 
 	// make verts, vert buffer, and send to GPU
 	float verts[] = {
-		-0.5f, -0.5f, 0.0f,
-		 0.5f, -0.5f, 0.0f,
-		 0.0f,  0.5f, 0.0f
-	};
+		 0.5f,  0.5f, 0.0f,  // top right
+		 0.5f, -0.5f, 0.0f,  // bottom right
+		-0.5f, -0.5f, 0.0f,  // bottom left
+		-0.5f,  0.5f, 0.0f   // top left
+	}; 
 	unsigned int VBO;
 	glGenBuffers(1, &VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
+
+	// made tri indicies and same as last
+	unsigned int triIndices[] = {
+		0, 1, 3,
+		1, 2, 3,
+	};
+	unsigned int EBO;
+	glGenBuffers(1, &EBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(triIndices), triIndices, GL_STATIC_DRAW);
+
+	// Map vert buffer to attriubte 0 in vertex shader
+	// vert has position which is 3 floats large
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
 
 	// error logging stuff
 	int success;
@@ -105,12 +120,9 @@ int main() {
 	glDeleteShader(vertexShader);
 	glDeleteShader(fragmentShader);
 
-	// Map vert buffer to vertex shader attriubte
-	// vert has position which is 3 floats large
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-
-
+	// wireframe if we want to
+	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	while (!glfwWindowShouldClose(window)) {
 		processInput(window);
@@ -120,7 +132,7 @@ int main() {
 
 		glUseProgram(shaderProgram);
 		glBindVertexArray(VAO);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 		glfwPollEvents();
 		glfwSwapBuffers(window);
