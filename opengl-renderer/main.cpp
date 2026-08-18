@@ -1,12 +1,30 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
 
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
+}
+
+std::string readFile(std::string fileName) {
+	std::ifstream file;
+	file.open(fileName, std::ios::in);
+
+	if (!file.is_open()) {
+		std::cerr << "Failed to open file: " << fileName << std::endl;
+		return "";
+	}
+
+	std::stringstream buffer;
+
+	buffer << file.rdbuf();
+	return buffer.str();
 }
 
 void processInput(GLFWwindow* window) {
@@ -74,43 +92,34 @@ int main() {
 	char infoLog[512];
 
 	// Vertex compile
-	const char* vertexShaderSource = "#version 330 core\n"
-		"layout (location = 0) in vec3 aPos;\n"
-		"void main()\n"
-		"{\n"
-		"   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-		"}\0";
-	unsigned int vertexShader;
-	vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-	glCompileShader(vertexShader);
-	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+	const std::string vertSource = readFile("vert.glsl");
+	const char* vertSourceC = vertSource.c_str();
+	unsigned int vertShaderHdl = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vertShaderHdl, 1, &vertSourceC, NULL);
+	glCompileShader(vertShaderHdl);
+	glGetShaderiv(vertShaderHdl, GL_COMPILE_STATUS, &success);
 	if (!success) {
-		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+		glGetShaderInfoLog(vertShaderHdl, 512, NULL, infoLog);
 		std::cout << "vertex shader compilation failed: \n" << infoLog << std::endl;
 	}
 
 	// Fragment compile
-	const char* fragmentShaderSource = "#version 330 core\n"
-		"out vec4 FragColor;\n"
-		"void main() {\n"
-		"    FragColor = vec4(1.0, 0.5f, 0.2f, 1.0);\n"
-		"}\0";
-	unsigned int fragmentShader;
-	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-	glCompileShader(fragmentShader);
-	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+	const std::string fragSource = readFile("frag.glsl");
+	const char* fragSourceC = fragSource.c_str();
+	unsigned int fragShaderHdl = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragShaderHdl, 1, &fragSourceC, NULL);
+	glCompileShader(fragShaderHdl);
+	glGetShaderiv(fragShaderHdl, GL_COMPILE_STATUS, &success);
 	if (!success) {
-		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+		glGetShaderInfoLog(fragShaderHdl, 512, NULL, infoLog);
 		std::cout << "fragment shader compilation failed: \n" << infoLog << std::endl;
 	}
 
 	// Link
 	unsigned int shaderProgram;
 	shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
+	glAttachShader(shaderProgram, vertShaderHdl);
+	glAttachShader(shaderProgram, fragShaderHdl);
 	glLinkProgram(shaderProgram);
 	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
 	if (!success) {
@@ -119,8 +128,8 @@ int main() {
 	}
 
 	// Clean up shader objects
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
+	glDeleteShader(vertShaderHdl);
+	glDeleteShader(fragShaderHdl);
 
 	// wireframe if we want to
 	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
