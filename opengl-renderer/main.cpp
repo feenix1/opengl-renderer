@@ -12,18 +12,19 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
 }
 
+/// @brief Reads data from file and returns a string object.
+/// @param fileName 
+/// @return 
 std::string readFile(std::string fileName) {
 	std::ifstream file;
 	file.open(fileName, std::ios::in);
-
 	if (!file.is_open()) {
 		std::cerr << "Failed to open file: " << fileName << std::endl;
 		return "";
 	}
-
 	std::stringstream buffer;
-
 	buffer << file.rdbuf();
+	file.close();
 	return buffer.str();
 }
 
@@ -52,7 +53,7 @@ int main() {
 		return -1;
 	}
 
-	glViewport(0, 0, 800, 600);
+	glViewport(0, 0, SCREEN_HEIGHT, SCREEN_WIDTH);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
 	// Create VAO (stores vert buffer setup/settings)
@@ -151,6 +152,7 @@ int main() {
 
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
+	glDeleteBuffers(1, &EBO);
 	glDeleteProgram(shaderProgram);
 
 	glfwTerminate();
