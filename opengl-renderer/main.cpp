@@ -14,8 +14,8 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 
 /// @brief Reads data from file and returns a string object.
 /// @param fileName 
-/// @return 
-std::string readFile(std::string fileName) {
+/// @return file as string
+static std::string readFile(std::string fileName) {
 	std::ifstream file;
 	file.open(fileName, std::ios::in);
 	if (!file.is_open()) {
@@ -40,7 +40,7 @@ int main() {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "renderer", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "renderer", nullptr, nullptr);
 	if (window == NULL) {
 		std::cout << "Could not create GLFW window!" << std::endl;
 		glfwTerminate();
@@ -53,7 +53,7 @@ int main() {
 		return -1;
 	}
 
-	glViewport(0, 0, SCREEN_HEIGHT, SCREEN_WIDTH);
+	glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
 	// Create VAO (stores vert buffer setup/settings)
@@ -63,10 +63,9 @@ int main() {
 
 	// make verts, vert buffer, and send to GPU
 	float verts[] = {
-		 0.5f,  0.5f, 0.0f,  // top right
-		 0.5f, -0.5f, 0.0f,  // bottom right
-		-0.5f, -0.5f, 0.0f,  // bottom left
-		-0.5f,  0.5f, 0.0f   // top left
+		0.5f,  -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,  
+		-0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 
+		0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f
 	}; 
 	unsigned int VBO;
 	glGenBuffers(1, &VBO);
@@ -75,8 +74,7 @@ int main() {
 
 	// made tri indicies and same as last
 	unsigned int triIndices[] = {
-		0, 1, 3,
-		1, 2, 3,
+		0, 1, 2,
 	};
 	unsigned int EBO;
 	glGenBuffers(1, &EBO);
@@ -85,8 +83,10 @@ int main() {
 
 	// Map vert buffer to attriubte 0 in vertex shader
 	// vert has position which is 3 floats large
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
 
 	// error logging stuff
 	int success;
@@ -117,14 +117,14 @@ int main() {
 	}
 
 	// Link
-	unsigned int shaderProgram;
-	shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertShaderHdl);
-	glAttachShader(shaderProgram, fragShaderHdl);
-	glLinkProgram(shaderProgram);
-	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+	unsigned int shaderProgramHdl;
+	shaderProgramHdl = glCreateProgram();
+	glAttachShader(shaderProgramHdl, vertShaderHdl);
+	glAttachShader(shaderProgramHdl, fragShaderHdl);
+	glLinkProgram(shaderProgramHdl);
+	glGetProgramiv(shaderProgramHdl, GL_LINK_STATUS, &success);
 	if (!success) {
-		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+		glGetProgramInfoLog(shaderProgramHdl, 512, NULL, infoLog);
 		std::cout << "shader program linking failed: \n" << infoLog << std::endl;
 	}
 
@@ -139,10 +139,15 @@ int main() {
 	while (!glfwWindowShouldClose(window)) {
 		processInput(window);
 
-		glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		glUseProgram(shaderProgram);
+		float time = glfwGetTime();
+		float greenValue = 0.5f + (sin(time) / 2.0f);
+		int colorUniform = glGetUniformLocation(shaderProgramHdl, "color");
+
+		glUseProgram(shaderProgramHdl);
+		glUniform4f(colorUniform, 0.0f, greenValue, 0.0f, 1.0f);
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
@@ -153,7 +158,7 @@ int main() {
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
 	glDeleteBuffers(1, &EBO);
-	glDeleteProgram(shaderProgram);
+	glDeleteProgram(shaderProgramHdl);
 
 	glfwTerminate();
 	return 0;
