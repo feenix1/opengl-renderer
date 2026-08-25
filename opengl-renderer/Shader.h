@@ -13,7 +13,15 @@
 class Shader
 {
 public:
+	/// <summary>
+	/// The shader handle ID in OpenGL
+	/// </summary>
 	unsigned int ID;
+	/// <summary>
+	/// Creates a shader on OpenGL
+	/// </summary>
+	/// <param name="vertPath"></param>
+	/// <param name="fragPath"></param>
 	Shader(const char* vertPath, const char* fragPath);
 	void use();
 	void setBool(const std::string &name, bool value) const;
